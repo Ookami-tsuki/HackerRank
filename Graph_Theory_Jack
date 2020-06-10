@@ -1,0 +1,79 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct wire {
+    int id;
+    unsigned cost;
+    struct wire *next;
+} wire_t;
+
+int main(void) {
+    int n, m;
+    scanf("%d%d", &n, &m);
+
+    wire_t *wires = malloc(2*m*sizeof(wire_t));
+    int take_pos = 0;
+
+    wire_t **links = calloc(n, sizeof(wire_t *));
+
+    for (int i = 0; i < m; i++) {
+    int src, dst;
+    unsigned cost;
+    scanf("%d%d%u", &src, &dst, &cost);
+    src -= 1;
+    dst -= 1;
+
+    wire_t *wire;
+
+    wire= &wires[take_pos++];
+    wire->id = dst;
+    wire->cost = cost;
+    wire->next = links[src];
+    links[src] = wire;
+
+    wire = &wires[take_pos++];
+    wire->id = src;
+    wire->cost = cost;
+    wire->next = links[dst];
+    links[dst] = wire;
+    }
+
+    int *not_reached = malloc(n*sizeof(int));
+    for (int i = 0; i < n; i++)
+    not_reached[i] = i;
+    int not_reached_size = n;
+
+    unsigned *cost = malloc(n*sizeof(unsigned));
+    memset(cost, -1, n*sizeof(int));
+
+    cost[0] = 0;
+
+    while (1) {
+    int min_id = -1;
+    unsigned min_cost = -1;
+    for (int i = 0; i < not_reached_size; i++)
+        if (cost[not_reached[i]] < min_cost)
+        min_id = i, min_cost = cost[not_reached[i]];
+
+    if (min_id == -1)
+        break;
+#define max(a, b) ((a) > (b) ? (a) : (b))
+    for (wire_t *p = links[not_reached[min_id]]; p; p = p->next)
+        if (max(min_cost, p->cost) < cost[p->id])
+        cost[p->id] = max(min_cost, p->cost);
+
+    not_reached[min_id] = not_reached[not_reached_size-1];
+    not_reached_size -= 1;
+    }
+
+    if (cost[n-1] + 1 == 0)
+    printf("NO PATH EXISTS\n");
+    else
+    printf("%d\n", cost[n-1]);
+
+    free(cost);
+    free(not_reached);
+}
+//https://www.hackerrank.com/challenges/jack-goes-to-rapture
+
